@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>websocket</title>
+	
+</head>
+	
+
+<body>
+	<!-- login -->
+	<input type="text" id="name">
+	<button id="login" type="button">login</button><br>
+	<!-- send msg -->
+	<input type="text" id="text">
+	<button id="btn" type="button">send</button>
+	<!-- chat -->
+	<div id="container"></div>
+
+
+	<script>
+		var ws = null;
+
+		// 在login触发时对所有相关方法进行初始化
+		document.getElementById('login').onclick = function(){
+			var name = document.getElementById('name').value;
+			// 当name为空直接返回
+			if (name === '') return console.log('name is empty!');
+
+			// 建立连接
+			ws = new WebSocket('ws://localhost:8088');
+			ws.onopen = function(){
+				ws.send(JSON.stringify({name: name,type: 'login'}));
+				// ws.send('Client Message');
+			};
+			
+			// 发送信息
+			document.getElementById('btn').onclick = sendText;
+			// 回车触发
+			document.getElementById('text').onkeyup = function(e){
+				if(e.keyCode !== 13) return;
+				sendText();
+			}
+
+			// 接受
+			ws.onmessage = function(e){
+				// document.getElementById('accept').innerHTML = e.data;
+				console.log(e.data);
+
+				// 追加chat
+				// document.getElementById('container').appendChild(creatChatPanel(JSON.parse(e.data)));
+				// 在开头追加
+				var con = document.getElementById('container');
+				con.insertBefore(creatChatPanel(JSON.parse(e.data)),con.children[0]);
+			};
+
+			// login后按钮失效
+			document.getElementById('login').setAttribute('disabled',true);
+			
+		};
+
+		// 接受的消息
+		function creatChatPanel(data){
+			var name = data.name;
+			var text = data.text;
+
+			var div = document.createElement('div');
+			var sp1 = document.createElement('span');
+			var p = document.createElement('p');
+
+			sp1.innerHTML = name+' '+(new Date().toLocaleString());
+			p.innerHTML = '---'+text;
+
+			div.appendChild(sp1);
+			div.appendChild(document.createElement('br'));
+			div.appendChild(p);
+
+			return div;
+		}
+
+		// 发送消息
+		function sendText(){
+				var text = document.getElementById('text');
+
+				// 为空返回
+				if (text.value === '') return ;
+				ws.send(JSON.stringify({text: text.value , type: 'chat'}));
+
+				text.value = '';
+		}
+
+	</script>
+</body>
+</html>
